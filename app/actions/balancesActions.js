@@ -1,5 +1,6 @@
 // @flow
 import { api, u, rpc, sc, wallet } from '@cityofzion/neon-js'
+import { rpc as n3Rpc } from '@cityofzion/neon-js-next'
 import { extend, isEmpty, get } from 'lodash-es'
 import { createActions } from 'spunky'
 import { Howl } from 'howler'
@@ -9,7 +10,10 @@ import coinAudioSample from '../assets/audio/coin.wav'
 import { getSettings } from './settingsActions'
 import { getNode, getRPCEndpoint } from './nodeStorageActions'
 import { ASSETS } from '../core/constants'
-import { COIN_DECIMAL_LENGTH } from '../core/formatters'
+import {
+  COIN_DECIMAL_LENGTH,
+  convertToArbitraryDecimals,
+} from '../core/formatters'
 import { toBigNumber } from '../core/math'
 import { findNetworkByDeprecatedLabel } from '../core/networks'
 
@@ -25,6 +29,7 @@ type Props = {
   address: string,
   tokens?: Array<TokenItemType>,
   isRetry?: boolean,
+  chain?: string,
 }
 
 let inMemoryBalances = {}
@@ -136,7 +141,7 @@ const getTokenBalances = (url, scriptHashArray, address) => {
 
 let RETRY_COUNT = 0
 
-async function getBalances({ net, address, isRetry = false }: Props) {
+async function getBalances({ net, address, isRetry = false, chain }: Props) {
   const { soundEnabled, tokens } = (await getSettings()) || {
     tokens: [],
     soundEnabled: true,
@@ -204,7 +209,7 @@ async function getBalances({ net, address, isRetry = false }: Props) {
   })
   if (shouldRetry && RETRY_COUNT < 4) {
     RETRY_COUNT += 1
-    return getBalances({ net, address, isRetry: true })
+    return getBalances({ net, address, isRetry: true, chain })
   }
 
   const parsedTokenBalances =
@@ -307,8 +312,69 @@ async function getBalances({ net, address, isRetry = false }: Props) {
   return extend({}, ...parsedTokenBalances, ...parsedAssets)
 }
 
+async function getN3Balances({ net, address }: Props) {
+  /* 
+    TODO:
+    - Node URL should come from settings
+    - Ability to support network param above
+    - Error handling
+    - "User generated tokens"
+  */
+  const balances = {
+    NEO: 0,
+    GAS: 0,
+  }
+  const NODE_URL = 'https://testnet2.neo.coz.io:443'
+  const rpcClient = new rpc.RPCClient(NODE_URL, '2.3.3')
+  try {
+    const balanceResponse = await rpcClient.execute(
+      new rpc.Query({
+        method: 'getnep17balances',
+        params: [address],
+      }),
+    )
+    const { result } = balanceResponse
+    for (const balance of result.balance) {
+      const { assethash, amount } = balance
+      const tokenNameResponse = await new n3Rpc.RPCClient(NODE_URL)
+        .invokeFunction(assethash, 'symbol')
+        .catch(e => {
+          console.error({ e })
+        })
+      const symbol = atob(tokenNameResponse.stack[0].value)
+      const decimalResponse = await new n3Rpc.RPCClient(NODE_URL)
+        .invokeFunction(assethash, 'decimals')
+        .catch(e => {
+          console.error({ e })
+        })
+      const decimals = decimalResponse.stack[0].value
+      const parsedAmount = convertToArbitraryDecimals(amount, decimals)
+      if (symbol === 'NEO' || symbol === 'GAS') {
+        balances[symbol] = Number(parsedAmount)
+      } else {
+        balances[assethash] = {
+          symbol,
+          cryptocompareSymbol: undefined,
+          scriptHash: assethash,
+          decimals,
+          balance: parsedAmount,
+        }
+      }
+    }
+
+    return balances
+  } catch (e) {
+    return balances
+  }
+}
+
 export default createActions(
   ID,
-  ({ net, address, tokens }: Props = {}) => async () =>
-    getBalances({ net, address, tokens }),
+  ({ net, address, tokens }: Props = {}) => async () => {
+    const { chain } = await getSettings()
+    if (chain === 'neo3') {
+      return getN3Balances({ net, address, tokens })
+    }
+    return getBalances({ net, address, tokens })
+  },
 )

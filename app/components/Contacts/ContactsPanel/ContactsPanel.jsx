@@ -35,10 +35,11 @@ type Contacts = {
 type Props = {
   history: Object,
   contacts: Contacts,
-  deleteContact: string => void,
+  deleteContact: (string, string) => void,
   showSuccessNotification: ({ message: string }) => void,
   showModal: (modalType: string, modalProps: Object) => any,
   intl: IntlShape,
+  chain: string,
 }
 
 type State = {
@@ -227,7 +228,7 @@ export default class ContactsPanel extends React.Component<Props, State> {
   }
 
   handleDelete = (name: string) => {
-    const { showModal, showSuccessNotification, intl } = this.props
+    const { showModal, showSuccessNotification, intl, chain } = this.props
 
     showModal(MODAL_TYPES.CONFIRM, {
       title: 'Confirm Delete',
@@ -240,7 +241,7 @@ export default class ContactsPanel extends React.Component<Props, State> {
         </div>
       ),
       onClick: () => {
-        this.props.deleteContact(name)
+        this.props.deleteContact(name, chain)
         showSuccessNotification({
           message: 'Contact removal was successful.',
         })

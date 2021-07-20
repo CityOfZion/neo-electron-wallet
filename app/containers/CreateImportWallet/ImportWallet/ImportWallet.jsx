@@ -21,6 +21,7 @@ type Props = {
   setAccounts: (Array<Object>) => any,
   showSuccessNotification: ({ message: string }) => string,
   showErrorNotification: ({ message: string }) => string,
+  chain: string,
 }
 
 type State = {
@@ -38,6 +39,7 @@ const IMPORT_OPTIONS = {
     ),
     translationId: 'privateKeyLabel',
     display: 'Private Key',
+    chainSupport: ['neo2', 'neo3'],
   },
   ENCRYPTED_WIF: {
     render: (props: Props) => (
@@ -49,6 +51,7 @@ const IMPORT_OPTIONS = {
     ),
     translationId: 'encryptedKeyLabel',
     display: 'Encrypted Key',
+    chainSupport: ['neo2', 'neo3'],
   },
 
   SPLIT: {
@@ -57,6 +60,7 @@ const IMPORT_OPTIONS = {
     ),
     translationId: 'splitKeyLabel',
     display: 'Split Key',
+    chainSupport: ['neo2'],
   },
 
   RECOVER_WALLET: {
@@ -88,6 +92,7 @@ const IMPORT_OPTIONS = {
     ),
     translationId: 'recoverWalletLabel',
     display: 'Recover Wallet',
+    chainSupport: ['neo2', 'neo3'],
   },
 }
 
@@ -103,7 +108,7 @@ export default class ImportWallet extends React.Component<Props, State> {
 
   render = () => {
     const { tabIndex } = this.state
-    const { authenticated } = this.props
+    const { authenticated, chain } = this.props
     const conditionalPanelProps = {}
     if (authenticated) {
       conditionalPanelProps.renderBackButton = () => (
@@ -138,18 +143,26 @@ export default class ImportWallet extends React.Component<Props, State> {
                 className="neon-tabs"
               >
                 <TabList>
-                  {this.options.map(option => (
-                    <Tab key={option.display}>
-                      <FormattedMessage id={option.translationId} />
-                    </Tab>
-                  ))}
+                  {this.options.map(
+                    option =>
+                      option.chainSupport &&
+                      option.chainSupport.includes(chain) && (
+                        <Tab key={option.display}>
+                          <FormattedMessage id={option.translationId} />
+                        </Tab>
+                      ),
+                  )}
                 </TabList>
                 <div>
-                  {this.options.map(option => (
-                    <TabPanel key={option.display}>
-                      {option.render(this.props)}
-                    </TabPanel>
-                  ))}
+                  {this.options.map(
+                    option =>
+                      option.chainSupport &&
+                      option.chainSupport.includes(chain) && (
+                        <TabPanel key={option.display}>
+                          {option.render(this.props)}
+                        </TabPanel>
+                      ),
+                  )}
                 </div>
               </Tabs>
             </div>

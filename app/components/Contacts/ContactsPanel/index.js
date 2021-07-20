@@ -14,6 +14,7 @@ import {
   showSuccessNotification,
 } from '../../../modules/notifications'
 import { showModal } from '../../../modules/modal'
+import withChainData from '../../../hocs/withChainData'
 
 const actionCreators = {
   showModal,
@@ -25,7 +26,7 @@ const mapDispatchToProps = dispatch =>
   bindActionCreators(actionCreators, dispatch)
 
 const mapContactActionsToProps = actions => ({
-  deleteContact: name => actions.call({ name }),
+  deleteContact: (name, chain) => actions.call({ name, chain }),
 })
 
 export default compose(
@@ -34,6 +35,7 @@ export default compose(
     mapDispatchToProps,
   ),
   withRouter,
+  withChainData(),
   withActions(deleteContactActions, mapContactActionsToProps),
   withFailureNotification(deleteContactActions),
   injectIntl,

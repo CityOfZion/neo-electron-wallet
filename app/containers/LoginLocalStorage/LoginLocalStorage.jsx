@@ -14,35 +14,42 @@ type Props = {
   loading: boolean,
   loginNep2: Function,
   accounts: Object,
+  n3Accounts: Object,
+  chain: string,
 }
 
 type State = {
   passphrase: string,
   selectedAccount: Object | null,
-  mappedAccounts: Array<Object>,
 }
 
 export default class LoginLocalStorage extends Component<Props, State> {
   static defaultProps = {
     accounts: [],
+    n3Accounts: [],
   }
 
   state = {
     passphrase: '',
     selectedAccount: null,
-    mappedAccounts:
-      this.props.accounts.length &&
-      this.props.accounts.map(account => {
-        const clonedAccount = cloneDeep(account)
-        clonedAccount.value = account.label
-        return clonedAccount
-      }),
+  }
+
+  returnMappedAccounts = () => {
+    const { chain, n3Accounts, accounts } = this.props
+    let dynamicMappedAccounts = cloneDeep(accounts)
+    if (chain === 'neo3') {
+      dynamicMappedAccounts = cloneDeep(n3Accounts)
+    }
+    return dynamicMappedAccounts.map(account => {
+      const clonedAccount = cloneDeep(account)
+      clonedAccount.value = account.label
+      return clonedAccount
+    })
   }
 
   render() {
     const { loading } = this.props
-    const { passphrase, selectedAccount, mappedAccounts } = this.state
-
+    const { passphrase, selectedAccount } = this.state
     return (
       <div id="loginLocalStorage" className={styles.flexContainer}>
         <form onSubmit={this.handleSubmit}>
@@ -50,7 +57,7 @@ export default class LoginLocalStorage extends Component<Props, State> {
             <StyledReactSelect
               value={selectedAccount}
               onChange={this.handleChange}
-              options={mappedAccounts || []}
+              options={this.returnMappedAccounts()}
             />
           </div>
           <div className={styles.inputMargin}>
@@ -87,17 +94,17 @@ export default class LoginLocalStorage extends Component<Props, State> {
   }
 
   handleSubmit = (event: Object) => {
-    const { loading, loginNep2, accounts } = this.props
+    const { loading, loginNep2, accounts, chain } = this.props
     const { passphrase, selectedAccount } = this.state
     if (selectedAccount) {
-      const accountInStorage = accounts.find(
+      const accountInStorage = this.returnMappedAccounts().find(
         account => account.label === selectedAccount.value,
       )
 
       event.preventDefault()
 
       if (!loading) {
-        loginNep2(passphrase, accountInStorage.key)
+        loginNep2(passphrase, accountInStorage.key, chain)
       }
     }
   }

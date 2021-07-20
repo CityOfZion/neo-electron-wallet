@@ -8,7 +8,8 @@ import styles from '../Home/Home.scss'
 import TextInput from '../../components/Inputs/TextInput'
 
 type Props = {
-  watchOnlyLogin: (content: string) => void,
+  watchOnlyLogin: ({ address: string, chain: string }) => void,
+  chain: string,
 }
 
 type State = {
@@ -21,7 +22,7 @@ export default class LoginPrivateKey extends React.Component<Props, State> {
   }
 
   render = () => {
-    const { watchOnlyLogin } = this.props
+    const { watchOnlyLogin, chain } = this.props
     const { address } = this.state
 
     return (
@@ -29,7 +30,7 @@ export default class LoginPrivateKey extends React.Component<Props, State> {
         <form
           onSubmit={e => {
             e.preventDefault()
-            watchOnlyLogin(address)
+            watchOnlyLogin({ address, chain })
           }}
         >
           <React.Fragment>

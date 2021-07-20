@@ -7,6 +7,7 @@ import { COIN_DECIMAL_LENGTH } from './formatters'
 import {
   TOKENS,
   TOKENS_TEST,
+  N3_TOKENS_TEST,
   MAIN_NETWORK_ID,
   TEST_NETWORK_ID,
 } from './constants'
@@ -44,7 +45,43 @@ const getTokenEntry = ((): Function => {
   })
 })()
 
-export const getDefaultTokens = async (): Promise<Array<TokenItemType>> => {
+export const getNeo3Tokens = async (): Promise<Array<TokenItemType>> => {
+  const tokens = []
+  tokens.push(
+    ...map(N3_TOKENS_TEST, tokenData =>
+      getTokenEntry(
+        tokenData.symbol,
+        tokenData.cryptocompareSymbol,
+        tokenData.networks['1'].hash,
+        MAIN_NETWORK_ID,
+        tokenData.networks['1'].name,
+        tokenData.networks['1'].decimals,
+        tokenData.networks['1'],
+      ),
+    ),
+  )
+  tokens.push(
+    ...map(N3_TOKENS_TEST, tokenData =>
+      getTokenEntry(
+        tokenData.symbol,
+        tokenData.cryptocompareSymbol,
+        tokenData.networks['2'].hash,
+        TEST_NETWORK_ID,
+        tokenData.networks['2'].name,
+        tokenData.networks['2'].decimals,
+        tokenData.networks['2'],
+      ),
+    ),
+  )
+  return tokens
+}
+
+export const getDefaultTokens = async (
+  chain?: string,
+): Promise<Array<TokenItemType>> => {
+  if (chain === 'neo3') {
+    return getNeo3Tokens()
+  }
   const tokens = []
   // Prevent duplicate requests here
   if (!fetchedTokens) {

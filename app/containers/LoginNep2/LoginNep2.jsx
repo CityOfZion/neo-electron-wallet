@@ -17,6 +17,7 @@ type Props = {
   cameraAvailable: boolean,
   progress: ProgressState,
   intl: IntlShape,
+  chain: string,
 }
 type State = {
   encryptedWIF: string,
@@ -120,13 +121,13 @@ export default class LoginNep2 extends Component<Props, State> {
   }
 
   handleSubmit = (event: Object) => {
-    const { loading, loginNep2 } = this.props
+    const { loading, loginNep2, chain } = this.props
     const { passphrase, encryptedWIF } = this.state
 
     event.preventDefault()
 
     if (!loading) {
-      loginNep2(passphrase, encryptedWIF)
+      loginNep2({ passphrase, encryptedWIF, chain })
     }
   }
 

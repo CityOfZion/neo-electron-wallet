@@ -12,6 +12,7 @@ import { showModal } from '../../../modules/modal'
 import { MODAL_TYPES } from '../../../core/constants'
 
 import contactsActions from '../../../actions/contactsActions'
+import withChainData from '../../../hocs/withChainData'
 
 const mapDispatchToProps = dispatch => ({
   showAddContactModal: props =>
@@ -27,6 +28,7 @@ export default compose(
     null,
     mapDispatchToProps,
   ),
+  withChainData(),
   withAuthData(),
   withData(contactsActions, mapContactsDataToProps),
   withNetworkData(),

@@ -1,8 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`LoginNep2 renders without crashing 1`] = `
-<withActions(Connect(withProgress(withProps(Connect(Connect(withError(Connect(withProgress(injectIntl(ErrorNotifier))))))))))
-  loginNep2={[Function]}
+<withData(Connect(withActions(Connect(withProgress(withProps(Connect(Connect(withError(Connect(withProgress(injectIntl(ErrorNotifier))))))))))))
+  chain="neo2"
+  dispatch={[Function]}
   store={
     Object {
       "clearActions": [Function],
@@ -11,6 +12,27 @@ exports[`LoginNep2 renders without crashing 1`] = `
       "getState": [Function],
       "replaceReducer": [Function],
       "subscribe": [Function],
+    }
+  }
+  storeSubscription={
+    t {
+      "listeners": Object {
+        "clear": [Function],
+        "get": [Function],
+        "notify": [Function],
+        "subscribe": [Function],
+      },
+      "onStateChange": [Function],
+      "parentSub": undefined,
+      "store": Object {
+        "clearActions": [Function],
+        "dispatch": [Function],
+        "getActions": [Function],
+        "getState": [Function],
+        "replaceReducer": [Function],
+        "subscribe": [Function],
+      },
+      "unsubscribe": [Function],
     }
   }
 />

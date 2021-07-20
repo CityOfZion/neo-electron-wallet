@@ -3,6 +3,7 @@ import React from 'react'
 import { noop } from 'lodash-es'
 import { FormattedMessage, intlShape } from 'react-intl'
 import { wallet } from '@cityofzion/neon-js'
+import { wallet as n3Wallet } from '@cityofzion/neon-js-next'
 
 import Button from '../../Button'
 import TextInput from '../../Inputs/TextInput'
@@ -22,6 +23,7 @@ type Props = {
   setAddress: Function,
   onSubmit: Function,
   intl: intlShape,
+  chain: string,
 }
 
 type State = {
@@ -115,6 +117,7 @@ export default class ContactForm extends React.Component<Props, State> {
   }
 
   disableButton = (name: string, address: string) => {
+    const { chain } = this.props
     if (name.length === 0) {
       return true
     }
@@ -123,7 +126,11 @@ export default class ContactForm extends React.Component<Props, State> {
       return true
     }
 
-    if (!wallet.isAddress(address)) {
+    if (
+      chain === 'neo3'
+        ? !n3Wallet.isAddress(address)
+        : !wallet.isAddress(address)
+    ) {
       return true
     }
 
@@ -167,10 +174,14 @@ export default class ContactForm extends React.Component<Props, State> {
   }
 
   validateAddress = (address: string) => {
-    const { mode, contacts, formAddress, intl } = this.props
+    const { mode, contacts, formAddress, intl, chain } = this.props
     let error
 
-    if (!wallet.isAddress(address)) {
+    if (
+      chain === 'neo3'
+        ? !n3Wallet.isAddress(address)
+        : !wallet.isAddress(address)
+    ) {
       error = intl.formatMessage({ id: 'errors.contact.invalidAddress' })
     }
 

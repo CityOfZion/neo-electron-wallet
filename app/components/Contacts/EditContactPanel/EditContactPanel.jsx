@@ -18,10 +18,11 @@ type Props = {
   name: string,
   address: string,
   onSave: Function,
-  deleteContact: string => void,
+  deleteContact: (string, string) => void,
   showSuccessNotification: ({ message: string }) => void,
   showModal: (modalType: string, modalProps: Object) => any,
   intl: IntlShape,
+  chain: string,
 }
 
 export default class EditContactPanel extends React.Component<Props> {
@@ -75,11 +76,12 @@ export default class EditContactPanel extends React.Component<Props> {
   )
 
   handleSubmit = (name: string, address: string) => {
-    this.props.onSave(name, address)
+    const { chain } = this.props
+    this.props.onSave(name, address, chain)
   }
 
   handleDelete = () => {
-    const { name, showModal, showSuccessNotification, intl } = this.props
+    const { name, showModal, showSuccessNotification, intl, chain } = this.props
 
     showModal(MODAL_TYPES.CONFIRM, {
       title: 'Confirm Delete',
@@ -92,7 +94,7 @@ export default class EditContactPanel extends React.Component<Props> {
         </div>
       ),
       onClick: () => {
-        this.props.deleteContact(name)
+        this.props.deleteContact(name, chain)
         showSuccessNotification({
           message: 'Contact removal was successful.',
         })

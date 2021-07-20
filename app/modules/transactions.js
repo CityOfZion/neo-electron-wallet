@@ -1,6 +1,7 @@
 // @flow
 /* eslint-disable camelcase */
 import { api, sc, u, wallet, settings } from '@cityofzion/neon-js'
+import { api as n3Api, wallet as n3Wallet } from '@cityofzion/neon-js-next'
 import { flatMap, keyBy, isEmpty, get } from 'lodash-es'
 
 import {
@@ -182,141 +183,234 @@ export const sendTransaction = ({
   sendEntries: Array<SendEntryType>,
   fees: number,
   isWatchOnly?: boolean,
-}) => (dispatch: DispatchType, getState: GetStateType): Promise<*> =>
-  new Promise(async (resolve, reject) => {
-    const state = getState()
-    const wif = getWIF(state)
-    const fromAddress = getAddress(state)
-    const net = getNetwork(state)
-    const tokenBalances = getTokenBalances(state)
-    const tokensBalanceMap = keyBy(tokenBalances, 'symbol')
-    const balances = {
-      ...getAssetBalances(state),
-      ...getTokenBalancesMap(tokenBalances),
-    }
-    const signingFunction = getSigningFunction(state)
-    const publicKey = getPublicKey(state)
-    const isHardwareSend = getIsHardwareLogin(state)
-    let url = await getNode(net)
-    if (isEmpty(url)) {
-      url = await getRPCEndpoint(net)
-    }
+  chain: string,
+}) => (dispatch: DispatchType, getState: GetStateType): Promise<*> => {
+  const state = getState()
+  const wif = getWIF(state)
+  const fromAddress = getAddress(state)
+  const net = getNetwork(state)
+  const tokenBalances = getTokenBalances(state)
+  const tokensBalanceMap = keyBy(tokenBalances, 'symbol')
+  const balances = {
+    ...getAssetBalances(state),
+    ...getTokenBalancesMap(tokenBalances),
+  }
+  const signingFunction = getSigningFunction(state)
+  const publicKey = getPublicKey(state)
+  const isHardwareSend = getIsHardwareLogin(state)
+  const { tokens, chain } = state.spunky.settings.data
+  return chain === 'neo3'
+    ? new Promise(async (resolve, reject) => {
+        try {
+          /*
+            TODO:
+              - Ledger support
+              - Support for test AND main net
+              - Node url should come from settings
+          */
 
-    const rejectTransaction = (message: string) =>
-      dispatch(showErrorNotification({ message }))
+          if (!isWatchOnly)
+            dispatch(
+              showInfoNotification({
+                message: 'Broadcasting transaction to network...',
+                autoDismiss: 0,
+              }),
+            )
 
-    const error = validateTransactionsBeforeSending(balances, sendEntries)
+          const NODE_URL = 'https://testnet2.neo.coz.io:443'
+          const FROM_ACCOUNT = new n3Wallet.Account(wif)
+          const CONFIG = {
+            account: FROM_ACCOUNT,
+            rpcAddress: NODE_URL,
+            // TODO: this will have to by dynamic based on test/mainnets
+            networkMagic: 844378958,
+          }
 
-    if (error) {
-      console.error({ error })
-      rejectTransaction(error)
-      return reject(error)
-    }
+          const facade = await n3Api.NetworkFacade.fromConfig({
+            node: NODE_URL,
+          })
 
-    if (!isWatchOnly)
-      dispatch(
-        showInfoNotification({
-          message: 'Broadcasting transaction to network...',
-          autoDismiss: 0,
-        }),
-      )
+          const signingConfig = {
+            signingCallback: n3Api.signWithAccount(CONFIG.account),
+          }
 
-    if (isHardwareSend && !isWatchOnly) {
-      dispatch(
-        showInfoNotification({
-          message: 'Please sign the transaction on your hardware device',
-          autoDismiss: 0,
-        }),
-      )
-    }
+          const nep17Intents = sendEntries.map(entry => {
+            const { address, amount, symbol } = entry
+            const token = tokens.find(
+              // eslint-disable-next-line eqeqeq
+              t => t.networkId == 2 && t.symbol === symbol,
+            )
+            const contractHash = token
+              ? token.scriptHash
+              : tokensBalanceMap[symbol] && tokensBalanceMap[symbol].scriptHash
 
-    const config = {
-      net,
-      tokensBalanceMap,
-      address: fromAddress,
-      publicKey,
-      privateKey: new wallet.Account(wif).privateKey,
-      signingFunction: isHardwareSend ? signingFunction : null,
-      fees,
-      url,
-      balance: undefined,
-      tx: undefined,
-      intents: undefined,
-      script: undefined,
-      gas: undefined,
-    }
-    const balanceResults = await api
-      .getBalanceFrom({ net, address: fromAddress }, api.neoscan)
-      .catch(e => {
-        // indicates that neo scan is down and that api.sendAsset and api.doInvoke
-        // will fail unless balances are supplied
-        console.error(e)
-        config.balance = generateBalanceInfo(tokensBalanceMap, fromAddress, net)
+            entry.contractHash = contractHash || ''
+            const intent = {
+              from: CONFIG.account,
+              to: address,
+              decimalAmt: amount,
+              contractHash,
+            }
+            return intent
+          })
+
+          const results = await facade.transferToken(
+            nep17Intents,
+            signingConfig,
+          )
+
+          dispatch(
+            showSuccessNotification({
+              message:
+                'Transaction pending! Your balance will automatically update when the blockchain has processed it.',
+            }),
+          )
+
+          if (!isWatchOnly) {
+            dispatch(
+              addPendingTransaction.call({
+                address: CONFIG.account.address,
+                tx: {
+                  hash: results,
+                  txid: results,
+                  sendEntries,
+                },
+                net,
+              }),
+            )
+          }
+          return resolve({ txid: results })
+        } catch (e) {
+          console.error({ e })
+          return reject(e)
+        }
       })
-    if (balanceResults) config.balance = balanceResults.balance
-
-    try {
-      const script = buildTransferScript(
-        config.net,
-        sendEntries,
-        config.address,
-        // $FlowFixMe
-        config.tokensBalanceMap,
-      )
-      if (isWatchOnly) {
-        config.intents = buildIntents(sendEntries)
-        config.script = script
-        if (script) {
-          config.gas = 0
-          api.createTx(config, 'invocation')
-          attachAttributesForEmptyTransaction(config)
-        } else {
-          api.createTx(config, 'contract')
-          attachAttributesForEmptyTransaction(config)
+    : new Promise(async (resolve, reject) => {
+        let url = await getNode(net)
+        if (isEmpty(url)) {
+          url = await getRPCEndpoint(net)
         }
 
-        await checkConfigForFees(config)
+        const rejectTransaction = (message: string) =>
+          dispatch(showErrorNotification({ message }))
 
-        return resolve(config)
-      }
-      const { response } = await makeRequest(sendEntries, config, script)
+        const error = validateTransactionsBeforeSending(balances, sendEntries)
 
-      if (!response.result) {
-        throw new Error('Rejected by RPC server.')
-      }
+        if (error) {
+          console.error({ error })
+          rejectTransaction(error)
+          return reject(error)
+        }
 
-      dispatch(
-        showSuccessNotification({
-          message:
-            'Transaction pending! Your balance will automatically update when the blockchain has processed it.',
-        }),
-      )
-      return resolve(response)
-    } catch (err) {
-      console.error({ err })
-      return checkConfigForFees(config)
-        .then(() => {
-          rejectTransaction(`Transaction failed: ${err.message}`)
-          return reject(err)
-        })
-        .catch(e => {
-          rejectTransaction(`Transaction failed: ${e.message}`)
-          return reject(e)
-        })
-    } finally {
-      const hash = get(config, 'tx.hash')
+        if (!isWatchOnly)
+          dispatch(
+            showInfoNotification({
+              message: 'Broadcasting transaction to network...',
+              autoDismiss: 0,
+            }),
+          )
 
-      if (!isWatchOnly) {
-        dispatch(
-          addPendingTransaction.call({
-            address: config.address,
-            tx: {
-              hash,
-              sendEntries,
-            },
-            net,
-          }),
-        )
-      }
-    }
-  })
+        if (isHardwareSend && !isWatchOnly) {
+          dispatch(
+            showInfoNotification({
+              message: 'Please sign the transaction on your hardware device',
+              autoDismiss: 0,
+            }),
+          )
+        }
+
+        const config = {
+          net,
+          tokensBalanceMap,
+          address: fromAddress,
+          publicKey,
+          privateKey: new wallet.Account(wif).privateKey,
+          signingFunction: isHardwareSend ? signingFunction : null,
+          fees,
+          url,
+          balance: undefined,
+          tx: undefined,
+          intents: undefined,
+          script: undefined,
+          gas: undefined,
+        }
+        const balanceResults = await api
+          .getBalanceFrom({ net, address: fromAddress }, api.neoscan)
+          .catch(e => {
+            // indicates that neo scan is down and that api.sendAsset and api.doInvoke
+            // will fail unless balances are supplied
+            console.error(e)
+            config.balance = generateBalanceInfo(
+              tokensBalanceMap,
+              fromAddress,
+              net,
+            )
+          })
+        if (balanceResults) config.balance = balanceResults.balance
+
+        try {
+          const script = buildTransferScript(
+            config.net,
+            sendEntries,
+            config.address,
+            // $FlowFixMe
+            config.tokensBalanceMap,
+          )
+          if (isWatchOnly) {
+            config.intents = buildIntents(sendEntries)
+            config.script = script
+            if (script) {
+              config.gas = 0
+              api.createTx(config, 'invocation')
+              attachAttributesForEmptyTransaction(config)
+            } else {
+              api.createTx(config, 'contract')
+              attachAttributesForEmptyTransaction(config)
+            }
+
+            await checkConfigForFees(config)
+
+            return resolve(config)
+          }
+          const { response } = await makeRequest(sendEntries, config, script)
+
+          if (!response.result) {
+            throw new Error('Rejected by RPC server.')
+          }
+
+          dispatch(
+            showSuccessNotification({
+              message:
+                'Transaction pending! Your balance will automatically update when the blockchain has processed it.',
+            }),
+          )
+          return resolve(response)
+        } catch (err) {
+          console.error({ err })
+          return checkConfigForFees(config)
+            .then(() => {
+              rejectTransaction(`Transaction failed: ${err.message}`)
+              return reject(err)
+            })
+            .catch(e => {
+              rejectTransaction(`Transaction failed: ${e.message}`)
+              return reject(e)
+            })
+        } finally {
+          const hash = get(config, 'tx.hash')
+
+          if (!isWatchOnly) {
+            dispatch(
+              addPendingTransaction.call({
+                address: config.address,
+                tx: {
+                  hash,
+                  sendEntries,
+                },
+                net,
+              }),
+            )
+          }
+        }
+      })
+}

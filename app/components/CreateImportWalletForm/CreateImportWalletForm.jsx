@@ -19,6 +19,7 @@ type Props = {
   importKeyOption: 'WIF' | 'ENCRYPTED_WIF',
   authenticated: boolean,
   intl: intlShape,
+  chain: string,
 }
 
 type State = {
@@ -132,7 +133,7 @@ class CreateImportWalletForm extends React.Component<Props, State> {
     e.preventDefault()
     const { history, option, importKeyOption } = this.props
     const { passphrase, passphrase2, key, walletName } = this.state
-    const { generateNewWalletAccount, authenticated } = this.props
+    const { generateNewWalletAccount, authenticated, chain } = this.props
 
     generateNewWalletAccount(
       passphrase,
@@ -144,6 +145,7 @@ class CreateImportWalletForm extends React.Component<Props, State> {
       walletName,
       authenticated,
       () => this.setState({ submitButtonDisabled: false }),
+      chain,
     )
   }
 

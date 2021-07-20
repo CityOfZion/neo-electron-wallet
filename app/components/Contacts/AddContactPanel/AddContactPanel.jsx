@@ -16,6 +16,7 @@ type Props = {
   name: string,
   address: string,
   onSave: Function,
+  chain: string,
 }
 
 export default class AddContactPanel extends React.Component<Props> {
@@ -57,6 +58,7 @@ export default class AddContactPanel extends React.Component<Props> {
   }
 
   handleSubmit = (name: string, address: string) => {
-    this.props.onSave(name, address)
+    const { chain } = this.props
+    this.props.onSave(name, address, chain)
   }
 }

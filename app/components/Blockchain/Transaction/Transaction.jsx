@@ -37,6 +37,7 @@ type Props = {
   address: string,
   className?: string,
   isPending?: boolean,
+  chain: string,
 }
 
 export default class Transaction extends React.Component<Props> {
@@ -86,9 +87,9 @@ export default class Transaction extends React.Component<Props> {
   }
 
   handleViewTransaction = () => {
-    const { networkId, explorer, tx } = this.props
+    const { networkId, explorer, tx, chain } = this.props
     const { txid } = tx
-    openExplorerTx(networkId, explorer, txid)
+    openExplorerTx(networkId, explorer, txid, chain)
   }
 
   renderTxDate = (time: ?number) => {

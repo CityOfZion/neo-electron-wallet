@@ -207,6 +207,45 @@ export const TOKENS_TEST = {
 // MainNet
 export const TOKENS = tokenList
 
+export const N3_TOKENS_TEST = {
+  NEO: {
+    symbol: 'NEO',
+    companyName: 'NEO',
+    networks: {
+      '1': {
+        name: 'NEO',
+        hash: 'ef4073a0f2b305a38ec4050e4d3d28bc40ea63f5',
+        decimals: 0,
+        totalSupply: 0,
+      },
+      '2': {
+        name: 'NEO',
+        hash: 'ef4073a0f2b305a38ec4050e4d3d28bc40ea63f5',
+        decimals: 0,
+        totalSupply: 0,
+      },
+    },
+  },
+  GAS: {
+    symbol: 'GAS',
+    companyName: 'GAS',
+    networks: {
+      '1': {
+        name: 'GAS',
+        hash: 'd2a4cff31913016155e38e474a2c06d08be276cf',
+        decimals: 8,
+        totalSupply: 0,
+      },
+      '2': {
+        name: 'GAS',
+        hash: 'd2a4cff31913016155e38e474a2c06d08be276cf',
+        decimals: 8,
+        totalSupply: 0,
+      },
+    },
+  },
+}
+
 export const NEO_ID =
   'c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b'
 export const GAS_ID =
@@ -232,6 +271,20 @@ export const ENDED_ICO_TOKENS = [
 
 export const DEFAULT_WALLET = {
   name: 'userWallet',
+  version: '1.0',
+  scrypt: {
+    cost: 16384,
+    blockSize: 8,
+    parallel: 8,
+    size: 64,
+  },
+  accounts: [],
+  extra: null,
+}
+
+export const N3_DEFAULT_WALLET = {
+  name: 'n3UserWallet',
+  chain: 'neo3',
   version: '1.0',
   scrypt: {
     cost: 16384,

@@ -13,6 +13,7 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from '../../../modules/notifications'
+import withChainData from '../../../hocs/withChainData'
 
 const actionCreators = {
   showErrorNotification,
@@ -35,6 +36,7 @@ export default compose(
     null,
     mapDispatchToProps,
   ),
+  withChainData(),
   withCall(nodeStorageActions),
   withData(accountsActions, mapAccountsDataToProps),
   withActions(updateAccountsActions, mapAccountsActionsToProps),

@@ -38,6 +38,7 @@ export const getExplorerTxLink = (
   networkId: string,
   explorer: ExplorerType,
   txId: string,
+  chain: string = 'neo2',
 ) => {
   const baseURL = getExplorerBaseURL(networkId, explorer)
 
@@ -51,7 +52,7 @@ export const getExplorerTxLink = (
     case NEOTUBE:
       return `${baseURL}/transaction/0x${txId}`
     case DORA:
-      return `${baseURL}/transaction/neo2/mainnet/0x${txId}`
+      return `${baseURL}/transaction/${chain}/mainnet/0x${txId}`
     default:
       throw new Error(`Unknown explorer ${explorer}`)
   }
@@ -105,7 +106,8 @@ export const openExplorerTx = (
   networkId: string,
   explorer: ExplorerType,
   txId: string,
-) => openExternal(getExplorerTxLink(networkId, explorer, txId))
+  chain: string,
+) => openExternal(getExplorerTxLink(networkId, explorer, txId, chain))
 
 export const openExplorerAddress = (
   networkId: string,

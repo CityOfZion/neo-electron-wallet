@@ -22,6 +22,7 @@ import { showErrorNotification } from '../../modules/notifications'
 
 import App from './App'
 import Loading from './Loading'
+import n3AccountsActions from '../../actions/n3AccountsActions'
 
 const { LOADING } = progressValues
 
@@ -65,4 +66,5 @@ export default compose(
   // Remove stale data from store on logout
   withLogoutReset(authActions),
   withLogoutReset(accountActions),
+  withLogoutReset(n3AccountsActions),
 )(App)

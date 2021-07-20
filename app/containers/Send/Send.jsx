@@ -2,6 +2,7 @@
 import React from 'react'
 import { uniqueId, get } from 'lodash-es'
 import { wallet } from '@cityofzion/neon-js'
+import { wallet as n3Wallet } from '@cityofzion/neon-js-next'
 import { FormattedMessage, IntlShape } from 'react-intl'
 
 import {
@@ -40,6 +41,7 @@ type Props = {
   showGeneratedTransactionModal: Object => void,
   showImportModal: (props: Object) => void,
   intl: IntlShape,
+  chain: string,
 }
 
 type State = {
@@ -325,6 +327,7 @@ export default class Send extends React.Component<Props, State> {
       sendTransaction,
       isWatchOnly,
       showGeneratedTransactionModal,
+      chain,
     } = this.props
 
     const { sendRowDetails, fees } = this.state
@@ -340,6 +343,7 @@ export default class Send extends React.Component<Props, State> {
       sendEntries: entries,
       fees,
       isWatchOnly: isWatchOnly || showTransactionModal,
+      chain,
     })
       .then((result: Object) => {
         if (isWatchOnly || showTransactionModal) {
@@ -453,21 +457,35 @@ export default class Send extends React.Component<Props, State> {
   }
 
   validateAddress = async (formAddress: string, index: number) => {
-    const { intl } = this.props
+    const { intl, chain } = this.props
     const { errors } = this.state.sendRowDetails[index]
 
-    if (!wallet.isAddress(formAddress)) {
-      errors.address = intl.formatMessage({ id: 'errors.send.invalidAddress' })
-    }
+    if (chain === 'neo3') {
+      if (!n3Wallet.isAddress(formAddress)) {
+        errors.address = intl.formatMessage({
+          id: 'errors.send.invalidAddress',
+        })
+        if (errors.address) {
+          this.updateRowField(index, 'errors', errors)
+          return false
+        }
+      }
+    } else {
+      if (!wallet.isAddress(formAddress)) {
+        errors.address = intl.formatMessage({
+          id: 'errors.send.invalidAddress',
+        })
+      }
 
-    const blackListedAddress = await isBlacklisted(formAddress)
-    if (blackListedAddress) {
-      errors.address = intl.formatMessage({ id: 'errors.send.blackListed' })
-    }
+      const blackListedAddress = await isBlacklisted(formAddress)
+      if (blackListedAddress) {
+        errors.address = intl.formatMessage({ id: 'errors.send.blackListed' })
+      }
 
-    if (errors.address) {
-      this.updateRowField(index, 'errors', errors)
-      return false
+      if (errors.address) {
+        this.updateRowField(index, 'errors', errors)
+        return false
+      }
     }
 
     return true
@@ -510,6 +528,7 @@ export default class Send extends React.Component<Props, State> {
       showSendModal,
       isWatchOnly,
       showImportModal,
+      chain,
     } = this.props
     const noSendableAssets = Object.keys(sendableAssets).length === 0
 
@@ -556,6 +575,7 @@ export default class Send extends React.Component<Props, State> {
           pushQRCodeData={this.pushQRCodeData}
           isWatchOnly={isWatchOnly}
           showImportModal={showImportModal}
+          chain={chain}
         />
       </section>
     )

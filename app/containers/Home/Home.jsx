@@ -24,6 +24,7 @@ type Props = {
   loading: boolean,
   theme: ThemeType,
   showModal: (modalType: string, modalProps: Object) => any,
+  chain: string,
 }
 
 const LOGIN_OPTIONS = {
@@ -31,26 +32,32 @@ const LOGIN_OPTIONS = {
     render: () => <LoginLocalStorage />,
     displayKey: 'Saved',
     renderDisplayMessage: () => <FormattedMessage id="authSaved" />,
+    chainSupport: ['neo2', 'neo3'],
   },
   PRIVATE_KEY: {
     render: () => <LoginPrivateKey />,
     displayKey: 'Private',
     renderDisplayMessage: () => <FormattedMessage id="authPrivate" />,
+    chainSupport: ['neo2', 'neo3'],
   },
   NEP2: {
     render: () => <LoginNep2 />,
     displayKey: 'Encrypted',
     renderDisplayMessage: () => <FormattedMessage id="authEncrypted" />,
+    chainSupport: ['neo2', 'neo3'],
   },
+
   watch: {
     render: () => <LoginWatchOnly />,
     displayKey: 'Watch',
     renderDisplayMessage: () => <FormattedMessage id="authWatch" />,
+    chainSupport: ['neo2', 'neo3'],
   },
   ledger: {
     render: () => <LoginLedgerNanoS />,
     displayKey: 'Ledger',
     renderDisplayMessage: () => <FormattedMessage id="authLedger" />,
+    chainSupport: ['neo2'],
   },
 }
 
@@ -86,7 +93,7 @@ export default class Home extends React.Component<Props, State> {
   }
 
   render() {
-    const { loading, theme } = this.props
+    const { loading, theme, chain } = this.props
 
     if (shouldRenderReleaseNotes(pack.version)) {
       // Allow users to view the normal for 1 second
@@ -98,7 +105,7 @@ export default class Home extends React.Component<Props, State> {
     }
 
     return (
-      <HomeLayout theme={theme}>
+      <HomeLayout theme={theme} chain={chain}>
         <div className={styles.inputContainer}>
           <Tabs
             selectedIndex={this.state.tabIndex}
@@ -106,21 +113,29 @@ export default class Home extends React.Component<Props, State> {
             className="neon-tabs"
           >
             <TabList>
-              {this.options.map(option => (
-                <Tab key={option.displayKey}>
-                  {option.renderDisplayMessage()}
-                </Tab>
-              ))}
+              {this.options.map(
+                option =>
+                  option.chainSupport &&
+                  option.chainSupport.includes(chain) && (
+                    <Tab key={option.displayKey}>
+                      {option.renderDisplayMessage()}
+                    </Tab>
+                  ),
+              )}
             </TabList>
             <div className={styles.loginContentContainer}>
-              {this.options.map(option => (
-                <TabPanel
-                  key={option.displayKey}
-                  selectedClassName={styles.homeTabPanel}
-                >
-                  {option.render()}
-                </TabPanel>
-              ))}
+              {this.options.map(
+                option =>
+                  option.chainSupport &&
+                  option.chainSupport.includes(chain) && (
+                    <TabPanel
+                      key={option.displayKey}
+                      selectedClassName={styles.homeTabPanel}
+                    >
+                      {option.render()}
+                    </TabPanel>
+                  ),
+              )}
             </div>
           </Tabs>
           <div className={styles.buttonRow}>

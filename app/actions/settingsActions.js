@@ -21,6 +21,7 @@ type Settings = {
   version: string,
   theme: string,
   soundEnabled: boolean,
+  chain: string,
 }
 
 const STORAGE_KEY = 'settings'
@@ -33,6 +34,8 @@ const DEFAULT_SETTINGS: () => Promise<Settings> = async () => ({
   version,
   soundEnabled: true,
   language: DEFAULT_LANGUAGE,
+  // TODO: create constant like the other defaults
+  chain: 'neo2',
 })
 
 export const getSettings = async (): Promise<Settings> => {
@@ -78,8 +81,13 @@ export const updateSettingsActions = createActions(
   },
 )
 
-export default createActions(ID, () => async (): Promise<Settings> => {
+export default createActions(ID, ({ store }) => async (): Promise<Settings> => {
   const settings = await getSettings()
+  const { chain } = settings
+
   const picked = await pick(settings, keys(await DEFAULT_SETTINGS()))
+  if (chain === 'neo3') {
+    picked.tokens = await getDefaultTokens('neo3')
+  }
   return picked
 })

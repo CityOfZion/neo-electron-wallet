@@ -37,6 +37,7 @@ const sortedByImage = a => {
 
 const mapBalanceDataToProps = balances => {
   const mutatedBalances = cloneDeep(balances)
+
   // eslint-disable-next-line
   Object.keys(mutatedBalances).map(key => {
     if (key === 'NEO' || key === 'GAS') {

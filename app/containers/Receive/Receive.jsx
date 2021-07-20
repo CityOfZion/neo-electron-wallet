@@ -3,7 +3,6 @@ import React from 'react'
 import { FormattedMessage } from 'react-intl'
 
 import HeaderBar from '../../components/HeaderBar'
-import AmountsPanel from '../../components/AmountsPanel'
 import ReceivePanel from '../../components/Receive/ReceivePanel'
 import { PRICE_UNAVAILABLE } from '../../core/constants'
 import { multiplyNumber } from '../../core/math'
@@ -12,7 +11,6 @@ import styles from './Receive.scss'
 
 type Props = {
   sendableAssets: Object,
-  currencyCode: string,
   address: string,
   accounts: Array<any>,
   prices: Object,
@@ -40,28 +38,15 @@ export default class Receive extends React.Component<Props, State> {
   }
 
   render() {
-    const {
-      sendableAssets,
-      currencyCode,
-      address,
-      showReceiveModal,
-      networkId,
-    } = this.props
+    const { address, showReceiveModal, networkId } = this.props
 
     const { walletName } = this.state
-    const noSendableAssets = Object.keys(sendableAssets).length === 0
 
     return (
       <section className={styles.receiveContainer}>
         <FormattedMessage id="receivePageLabel">
           {t => <HeaderBar label={t} shouldRenderRefresh />}
         </FormattedMessage>
-        {!noSendableAssets && (
-          <AmountsPanel
-            amountsData={this.createSendAmountsData()}
-            currencyCode={currencyCode}
-          />
-        )}
         <ReceivePanel
           address={address}
           networkId={networkId}

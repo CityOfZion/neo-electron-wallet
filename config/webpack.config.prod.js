@@ -19,7 +19,7 @@ module.exports = {
   mode: 'production',
   bail: true,
   devtool: false,
-  target: 'electron-main',
+  target: 'electron-renderer',
   entry: ['babel-polyfill', path.join(__dirname, '..', 'app/index.js')],
   externals: {
     'node-hid': 'require("node-hid")',

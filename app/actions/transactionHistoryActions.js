@@ -5,6 +5,7 @@ import { createActions } from 'spunky'
 
 import { TX_TYPES } from '../core/constants'
 import { findAndReturnTokenInfo } from '../util/findAndReturnTokenInfo'
+import { getSettings } from './settingsActions'
 
 type Props = {
   net: string,
@@ -78,16 +79,30 @@ export default createActions(
     address,
     shouldIncrementPagination = false,
   }: Props = {}) => async () => {
+    const { chain } = await getSettings()
+
     // If refresh action dispatched reset pagination
     // to grab the most recent abstracts
     if (!shouldIncrementPagination) {
       page = 1
     }
 
-    const endpoint = api.neoscan.getAPIEndpoint(net)
-    const { data } = await axios.get(
-      `${endpoint}/v1/get_address_abstracts/${address}/${page}`,
-    )
+    let data = { entries: [] }
+
+    if (chain === 'neo3') {
+      const results = await axios.get(
+        `https://dora.coz.io/api/v1/neo3/testnet/get_address_abstracts/${address}/${page}`,
+      )
+      // eslint-disable-next-line
+      data = results.data
+    } else {
+      const endpoint = api.neoscan.getAPIEndpoint(net)
+      const results = await axios.get(
+        `${endpoint}/v1/get_address_abstracts/${address}/${page}`,
+      )
+      // eslint-disable-next-line
+      data = results.data
+    }
 
     const parsedEntries = await parseAbstractData(data.entries, address, net)
     page += 1

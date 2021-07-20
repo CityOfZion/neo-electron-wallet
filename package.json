@@ -1,6 +1,6 @@
 {
   "name": "Neon",
-  "version": "2.6.2",
+  "version": "2.7.2",
   "main": "./main.js",
   "description": "Light wallet for NEO blockchain",
   "homepage": "https://github.com/CityOfZion/neon-wallet",
@@ -85,6 +85,7 @@
   },
   "dependencies": {
     "@cityofzion/neon-js": "3.11.9",
+    "@cityofzion/neon-js-next": "npm:@cityofzion/neon-js@5.0.0-next.13",
     "@formatjs/intl-pluralrules": "^1.5.2",
     "@ledgerhq/hw-transport-node-hid": "5.0.0",
     "axios": "0.21.1",
@@ -172,7 +173,7 @@
     "babel-preset-stage-0": "6.24.1",
     "cross-env": "5.1.1",
     "css-loader": "0.28.7",
-    "electron": "8.5.2",
+    "electron": "8.5.5",
     "electron-builder": "22.9.1",
     "electron-builder-notarize": "^1.2.0",
     "electron-devtools-installer": "2.2.4",

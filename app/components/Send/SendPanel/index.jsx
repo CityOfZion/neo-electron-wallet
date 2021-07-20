@@ -47,6 +47,7 @@ type Props = {
   showImportModal: (props: Object) => any,
   pushQRCodeData: (data: Object) => any,
   calculateMaxValue: (asset: string, index: number) => string,
+  chain: string,
 }
 
 const shouldDisableSendButton = sendRowDetails =>
@@ -83,6 +84,7 @@ const SendPanel = ({
   calculateMaxValue,
   isWatchOnly,
   showImportModal,
+  chain,
 }: Props) => {
   if (noSendableAssets) {
     return <ZeroAssets address={address} />
@@ -102,14 +104,16 @@ const SendPanel = ({
         calculateMaxValue={calculateMaxValue}
         isWatchOnly={isWatchOnly}
       />
-      <div className={styles.priorityFeeContainer}>
-        <PriorityFee
-          availableGas={Number(get(sendableAssets, 'GAS.balance', 0))}
-          handleAddPriorityFee={handleAddPriorityFee}
-          fees={fees}
-          disabled={shouldDisableSendButton(sendRowDetails)}
-        />
-      </div>
+      {chain === 'neo2' && (
+        <div className={styles.priorityFeeContainer}>
+          <PriorityFee
+            availableGas={Number(get(sendableAssets, 'GAS.balance', 0))}
+            handleAddPriorityFee={handleAddPriorityFee}
+            fees={fees}
+            disabled={shouldDisableSendButton(sendRowDetails)}
+          />
+        </div>
+      )}
       {isWatchOnly ? (
         <Button
           className={styles.generateTransactionButton}
@@ -133,21 +137,25 @@ const SendPanel = ({
         >
           {/* Send {pluralize('Asset', sendRowDetails.length)}{' '}
           {fees ? 'With Fee' : 'Without Fee'} */}
-
-          {fees ? (
-            <FormattedMessage
-              id="sendWithFee"
-              values={{
-                itemCount: sendRowDetails.length,
-              }}
-            />
+          {/* eslint-disable-next-line no-nested-ternary */}
+          {chain === 'neo2' ? (
+            fees ? (
+              <FormattedMessage
+                id="sendWithFee"
+                values={{
+                  itemCount: sendRowDetails.length,
+                }}
+              />
+            ) : (
+              <FormattedMessage
+                id="sendWithoutFee"
+                values={{
+                  itemCount: sendRowDetails.length,
+                }}
+              />
+            )
           ) : (
-            <FormattedMessage
-              id="sendWithoutFee"
-              values={{
-                itemCount: sendRowDetails.length,
-              }}
-            />
+            'Send'
           )}
         </Button>
       )}

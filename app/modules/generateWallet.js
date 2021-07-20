@@ -1,9 +1,9 @@
 // @flow
 import storage from 'electron-json-storage'
 import { wallet } from '@cityofzion/neon-js'
+import { wallet as n3Wallet, logging } from '@cityofzion/neon-js-next'
 import { isEmpty, intersectionBy } from 'lodash-es'
 import { ECCurves } from 'ecc-jsbn'
-
 import {
   showErrorNotification,
   showInfoNotification,
@@ -17,8 +17,14 @@ import toSentence from '../util/toSentence'
 
 // Actions
 import { saveAccountActions, getWallet } from '../actions/accountsActions'
+import {
+  saveAccountActions as n3SaveAccountActions,
+  getWallet as n3GetWallet,
+} from '../actions/n3AccountsActions'
 
 const { BigInteger } = require('jsbn')
+
+logging.logger.setDefaultLevel('info')
 
 // Constants
 export const NEW_WALLET_ACCOUNT = 'NEW_WALLET_ACCOUNT'
@@ -233,7 +239,7 @@ export function validateInputs(
 
 type KeyOption = 'WIF' | 'ENCRYPTED_WIF' | 'SPLIT'
 
-export const generateNewWalletAccount = (
+export const generateN3NewWalletAccount = (
   passphrase: string,
   passphrase2: string,
   key: string,
@@ -248,6 +254,118 @@ export const generateNewWalletAccount = (
     dispatch(showErrorNotification({ message }))
     return false
   }
+  const infoNotificationId: any = dispatch(
+    showInfoNotification({
+      message: 'Generating encoded key...',
+      autoDismiss: 0,
+    }),
+  )
+  let wif = ''
+  const isImport = key !== null
+
+  const setWIF = async () => {
+    switch (keyOption) {
+      case 'ENCRYPTED_WIF':
+        wif = await n3Wallet.decrypt(key, passphrase)
+        break
+      default:
+        wif = key
+    }
+    validateInputs(wif, passphrase, passphrase2)
+  }
+
+  setWIF()
+    .then(async () => {
+      try {
+        const account = new n3Wallet.Account(wif || wallet.generatePrivateKey())
+
+        const { WIF, address } = account
+        let encryptedWIF
+        switch (keyOption) {
+          case 'WIF':
+            encryptedWIF = await n3Wallet.encrypt(WIF, passphrase)
+            break
+          default:
+            encryptedWIF = key
+        }
+
+        // TODO: Do we care about validating wallet names across chain?
+        const storedWallet = await n3GetWallet()
+
+        if (walletName && walletHasLabel(storedWallet, walletName)) {
+          onFailure()
+          return dispatchError(
+            'A wallet with this name already exists locally.',
+          )
+        }
+        if (walletHasKey(storedWallet, encryptedWIF)) {
+          onFailure()
+          return dispatchError(
+            'A wallet with this encrypted key already exists locally.',
+          )
+        }
+
+        dispatch(
+          n3SaveAccountActions.call({
+            isImport,
+            label: walletName,
+            address,
+            key: encryptedWIF,
+          }),
+        )
+
+        dispatch(hideNotification(infoNotificationId))
+        dispatch(
+          newWalletAccount({
+            account: {
+              wif: WIF,
+              address,
+              passphrase,
+              encryptedWIF,
+              walletName,
+            },
+            isImport,
+          }),
+        )
+
+        if (wif) history.push(ROUTES.HOME)
+        if (authenticated)
+          history.push(ROUTES.DISPLAY_WALLET_KEYS_AUTHENTICATED)
+        else history.push(ROUTES.DISPLAY_WALLET_KEYS)
+        return true
+      } catch (e) {
+        onFailure()
+        console.error(e)
+        return dispatchError(
+          `An error occured while trying to ${
+            isImport ? 'import' : 'generate'
+          } a new wallet`,
+        )
+      }
+    })
+    .catch(e => {
+      onFailure()
+      console.error(e)
+      return dispatchError(e.message)
+    })
+}
+
+export const generateNewWalletAccount = (
+  passphrase: string,
+  passphrase2: string,
+  key: string,
+  keypart2: string,
+  keyOption: KeyOption,
+  history: Object,
+  walletName: string,
+  authenticated: boolean = false,
+  onFailure: () => any = () => undefined,
+  chain: string,
+) => (dispatch: DispatchType) => {
+  const dispatchError = (message: string) => {
+    dispatch(showErrorNotification({ message }))
+    return false
+  }
 
   const infoNotificationId: any = dispatch(
     showInfoNotification({
@@ -255,6 +373,22 @@ export const generateNewWalletAccount = (
       autoDismiss: 0,
     }),
   )
+
+  if (chain === 'neo3') {
+    return dispatch(
+      generateN3NewWalletAccount(
+        passphrase,
+        passphrase2,
+        key,
+        keypart2,
+        keyOption,
+        history,
+        walletName,
+        authenticated,
+        onFailure,
+      ),
+    )
+  }
 
   let wif = ''
   // If the key is not given, it means that the user has choosen

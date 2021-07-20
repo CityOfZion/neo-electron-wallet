@@ -9,14 +9,15 @@ type Props = {
   address: string,
   hideModal: () => null,
   triggerSuccessNotification: (text: string) => void,
-  onSave: (name: string, address: string) => any,
+  onSave: (name: string, address: string, chain: string) => any,
+  chain: string,
 }
 
 class AddContactModal extends Component<Props> {
   handleSubmit = (name: string, address: string) => {
-    const { onSave, hideModal, triggerSuccessNotification } = this.props
+    const { onSave, hideModal, triggerSuccessNotification, chain } = this.props
 
-    onSave(name, address)
+    onSave(name, address, chain)
     triggerSuccessNotification('Contact added.')
     hideModal()
   }

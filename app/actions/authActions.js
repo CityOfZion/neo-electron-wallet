@@ -1,5 +1,6 @@
 // @flow
 import { wallet } from '@cityofzion/neon-js'
+import { wallet as n3Wallet } from '@cityofzion/neon-js-next'
 import { noop } from 'lodash-es'
 import { createActions } from 'spunky'
 import dns from 'dns'
@@ -16,6 +17,7 @@ type WifLoginProps = {
 
 type WatchOnlyLoginProps = {
   address: string,
+  chain: string,
 }
 
 type LedgerLoginProps = {
@@ -27,6 +29,7 @@ type LedgerLoginProps = {
 type Nep2LoginProps = {
   passphrase: string,
   encryptedWIF: string,
+  chain: string,
 }
 
 type AccountType = ?{
@@ -72,9 +75,47 @@ export const wifLoginActions = createActions(
   },
 )
 
+export const n3WifLoginActions = createActions(
+  ID,
+  ({ wif }: WifLoginProps) => async (): Promise<AccountType> => {
+    if (!n3Wallet.isWIF(wif) && !n3Wallet.isPrivateKey(wif)) {
+      throw new Error('Invalid private key entered')
+    }
+
+    const account = new n3Wallet.Account(wif)
+    const hasInternetConnectivity = await checkForInternetConnectivity()
+
+    return {
+      wif: account.WIF,
+      publicKey: account.publicKey,
+      address: account.address,
+      isHardwareLogin: false,
+      hasInternetConnectivity,
+    }
+  },
+)
+
 export const watchOnlyLoginActions = createActions(
   ID,
-  ({ address }: WatchOnlyLoginProps) => async (): Promise<AccountType> => {
+  ({ address, chain }: WatchOnlyLoginProps) => async (): Promise<
+    AccountType,
+  > => {
+    if (chain === 'neo3') {
+      if (!n3Wallet.isAddress(address)) {
+        throw new Error('Invalid public key entered')
+      }
+      // TODO: offline signing flow for n3 totally unsupported
+      // const hasInternetConnectivity = await checkForInternetConnectivity()
+      const hasInternetConnectivity = true
+
+      return {
+        address,
+        isHardwareLogin: false,
+        isWatchOnly: true,
+        hasInternetConnectivity,
+      }
+    }
+
     if (!wallet.isAddress(address)) {
       throw new Error('Invalid public key entered')
     }
@@ -91,9 +132,35 @@ export const watchOnlyLoginActions = createActions(
 
 export const nep2LoginActions = createActions(
   ID,
-  ({ passphrase, encryptedWIF }: Nep2LoginProps) => async (): Promise<
+  ({ passphrase, encryptedWIF, chain }: Nep2LoginProps) => async (): Promise<
     AccountType,
   > => {
+    if (chain === 'neo3') {
+      if (!validatePassphraseLength(passphrase)) {
+        throw new Error('Passphrase too short')
+      }
+
+      if (!n3Wallet.isNEP2(encryptedWIF)) {
+        throw new Error('Invalid encrypted key entered')
+      }
+
+      const wif = await n3Wallet.decrypt(encryptedWIF, passphrase)
+      const account = new n3Wallet.Account(wif)
+
+      // TODO: offline signing flow for n3 totally unsupported
+      // const hasInternetConnectivity = await checkForInternetConnectivity()
+      const hasInternetConnectivity = true
+
+      return {
+        wif: account.WIF,
+        publicKey: account.publicKey,
+        address: account.address,
+        isHardwareLogin: false,
+        hasInternetConnectivity,
+        encryptedWIF,
+      }
+    }
+
     if (!validatePassphraseLength(passphrase)) {
       throw new Error('Passphrase too short')
     }

@@ -155,6 +155,7 @@ declare type SendEntryType = {
   amount: string,
   address: string,
   symbol: SymbolType,
+  contractHash?: string,
 }
 
 declare type ThemeType = THEME.LIGHT | THEME.DARK

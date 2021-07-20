@@ -121,7 +121,8 @@ class SendRecipientListItem extends Component<Props> {
         options={{ numeralDecimalScale: 8 }}
       />
     )
-
+    // TODO: this should be converted to use the StyledReactSelect component
+    // currently the UI does not indicate if there are no contacts
     const addressInput = showConfirmSend ? (
       <DisplayInput value={address} />
     ) : (

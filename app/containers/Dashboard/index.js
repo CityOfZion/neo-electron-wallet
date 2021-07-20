@@ -17,6 +17,7 @@ import { showModal } from '../../modules/modal'
 import { internetConnectionPromptPresented } from '../../actions/internetConnectivityPromptActions'
 
 import Dashboard from './Dashboard'
+import withChainData from '../../hocs/withChainData'
 
 const mapStateToProps: MapStateToProps<*, *, *> = (state: Object) => ({
   notification: getNotifications(state),
@@ -35,6 +36,7 @@ const mapAccountActionsToProps = (actions, props) => ({
       net: props.net,
       address: props.address,
       tokens: props.tokens,
+      chain: props.chain,
     }),
 })
 
@@ -43,6 +45,7 @@ export default compose(
     mapStateToProps,
     mapDispatchToProps,
   ),
+  withChainData(),
 
   // Expose function for polling & reloading account related data.
   withAuthData(),

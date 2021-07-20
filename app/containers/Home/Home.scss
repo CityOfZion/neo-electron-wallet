@@ -281,3 +281,19 @@ $navigation-margin: 20px;
 .centeredInput {
   margin-top: 20px;
 }
+
+.chainToggleContainer {
+  margin-bottom: 12px;
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  label {
+    margin: 0 24px;
+  }
+
+  h5 {
+    margin: 0;
+  }
+}

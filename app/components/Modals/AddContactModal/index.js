@@ -8,10 +8,11 @@ import { showSuccessNotification } from '../../../modules/notifications'
 
 import AddContactModal from './AddContactModal'
 import { addContactActions } from '../../../actions/contactsActions'
+import withChainData from '../../../hocs/withChainData'
 
 const mapContactActionsToProps = (actions: Object) => ({
-  onSave: (name: string, address: string) =>
-    actions.call({ name: trim(name), address: trim(address) }),
+  onSave: (name: string, address: string, chain: string) =>
+    actions.call({ name: trim(name), address: trim(address), chain }),
 })
 
 const mapDispatchToProps = (dispatch: Function) => ({
@@ -25,5 +26,6 @@ export default compose(
     null,
     mapDispatchToProps,
   ),
+  withChainData,
   withActions(addContactActions, mapContactActionsToProps),
 )(AddContactModal)

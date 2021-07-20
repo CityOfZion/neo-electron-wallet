@@ -5,14 +5,21 @@ import { withActions, withProgress } from 'spunky'
 import LoginPrivateKey from './LoginPrivateKey'
 import withFailureNotification from '../../hocs/withFailureNotification'
 import withCameraAvailability from '../../hocs/withCameraAvailability'
-import { wifLoginActions } from '../../actions/authActions'
+import { n3WifLoginActions, wifLoginActions } from '../../actions/authActions'
+import withChainData from '../../hocs/withChainData'
 
-const mapActionsToProps = actions => ({
+const mapWifLoginActionsToProps = actions => ({
   loginWithPrivateKey: wif => actions.call({ wif }),
 })
 
+const mapN3WifLoginActionsToProps = actions => ({
+  loginWithN3PrivateKey: wif => actions.call({ wif }),
+})
+
 export default compose(
-  withActions(wifLoginActions, mapActionsToProps),
+  withChainData(),
+  withActions(wifLoginActions, mapWifLoginActionsToProps),
+  withActions(n3WifLoginActions, mapN3WifLoginActionsToProps),
   withFailureNotification(wifLoginActions),
   withProgress(wifLoginActions),
   withCameraAvailability,

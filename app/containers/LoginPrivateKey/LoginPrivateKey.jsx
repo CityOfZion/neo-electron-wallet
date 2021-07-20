@@ -13,8 +13,10 @@ import styles from '../Home/Home.scss'
 
 type Props = {
   loginWithPrivateKey: (content: string) => void,
+  loginWithN3PrivateKey: (content: string) => void,
   cameraAvailable: boolean,
   progress: ProgressState,
+  chain: string,
 }
 
 type State = {
@@ -33,7 +35,13 @@ export default class LoginPrivateKey extends React.Component<Props, State> {
   }
 
   render = () => {
-    const { loginWithPrivateKey, cameraAvailable, progress } = this.props
+    const {
+      loginWithPrivateKey,
+      loginWithN3PrivateKey,
+      cameraAvailable,
+      progress,
+      chain,
+    } = this.props
     const { wif, scannerActive } = this.state
 
     return (
@@ -41,7 +49,9 @@ export default class LoginPrivateKey extends React.Component<Props, State> {
         <form
           onSubmit={e => {
             e.preventDefault()
-            loginWithPrivateKey(wif)
+            return chain === 'neo3'
+              ? loginWithN3PrivateKey(wif)
+              : loginWithPrivateKey(wif)
           }}
         >
           {scannerActive ? (
